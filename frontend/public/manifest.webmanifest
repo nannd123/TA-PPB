@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Quizora",
+  "short_name": "Quizora",
+  "description": "Kuis pengetahuan harian untuk belajar dengan menyenangkan.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fafbfe",
+  "theme_color": "#5b5bd6",
+  "icons": [
+    {
+      "src": "/icons/quizora-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/quizora-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

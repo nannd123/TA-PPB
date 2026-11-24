@@ -1,0 +1,418 @@
+{
+  "info": {
+    "_postman_id": "d35a9134-16b2-4c8d-b8bf-544695d1966a",
+    "name": "Quizora API",
+    "description": "Smoke tests and the main authenticated quiz flow. Set accessToken to a valid Supabase user access token. Database-backed requests require a migrated and seeded Supabase project.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Health endpoint responds successfully', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().data.service).to.eql('quizora-api');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List categories",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/categories"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Categories are returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const categories = pm.response.json().data;",
+              "  pm.expect(categories).to.be.an('array').that.is.not.empty;",
+              "  pm.collectionVariables.set('categoryId', categories[0].id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get category detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Category detail is returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('categoryId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List quizzes in category",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/categories/{{categoryId}}/quizzes?limit=20&offset=0"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Category quiz list uses the expected envelope', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.success).to.eql(true);",
+              "  pm.expect(body.data.quizzes).to.be.an('array');",
+              "  pm.expect(body.meta.total).to.be.a('number');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List quizzes",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/quizzes?limit=20&offset=0"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Published quizzes are returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const quizzes = pm.response.json().data;",
+              "  pm.expect(quizzes).to.be.an('array').that.is.not.empty;",
+              "  pm.collectionVariables.set('quizId', quizzes[0].id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get daily quiz",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/quizzes/daily"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Daily quiz exists or returns the documented empty state', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "  if (pm.response.code === 200) {",
+              "    pm.expect(pm.response.json().data.is_daily).to.eql(true);",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get quiz detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/quizzes/{{quizId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Quiz detail includes question count', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().data.question_count).to.be.a('number');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get quiz questions without answer keys",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/quizzes/{{quizId}}/questions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Question payload does not expose keys or explanations', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const questions = pm.response.json().data;",
+              "  pm.expect(questions).to.be.an('array').that.is.not.empty;",
+              "  const firstQuestion = questions[0];",
+              "  pm.expect(firstQuestion).not.to.have.property('explanation');",
+              "  const options = firstQuestion.answer_options;",
+              "  pm.expect(options).to.be.an('array').that.has.length(4);",
+              "  options.forEach(function (option) {",
+              "    pm.expect(option).not.to.have.property('is_correct');",
+              "  });",
+              "  pm.collectionVariables.set('questionId', firstQuestion.id);",
+              "  pm.collectionVariables.set('optionId', options[0].id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Start quiz attempt",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/quizzes/{{quizId}}/attempts"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Attempt is created for the authenticated user', function () {",
+              "  pm.response.to.have.status(201);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.data.status).to.eql('in_progress');",
+              "  pm.collectionVariables.set('attemptId', body.data.id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit quiz attempt",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": [\n    {\n      \"question_id\": \"{{questionId}}\",\n      \"selected_option_id\": \"{{optionId}}\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/attempts/{{attemptId}}/submit"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Score is computed by the API', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const result = pm.response.json().data;",
+              "  pm.expect(result.score).to.be.within(0, 100);",
+              "  pm.expect(result.total_questions).to.be.a('number');",
+              "  pm.expect(result).not.to.have.property('is_correct');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List quiz history",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/attempts?limit=20&offset=0"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User history contains the submitted attempt', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const attempts = pm.response.json().data;",
+              "  pm.expect(attempts).to.be.an('array');",
+              "  pm.expect(attempts.some(function (attempt) { return attempt.id === pm.collectionVariables.get('attemptId'); })).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get quiz result",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/attempts/{{attemptId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Submitted result includes question review', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const result = pm.response.json().data;",
+              "  pm.expect(result.status).to.eql('submitted');",
+              "  pm.expect(result.answers).to.be.an('array').that.is.not.empty;",
+              "  pm.expect(result.answers[0].question.explanation).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject malformed category UUID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/categories/not-a-uuid"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Malformed UUID receives a client error', function () {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().success).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject attempt request without user token",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/attempts"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Attempt routes require user authentication', function () {",
+              "  pm.response.to.have.status(401);",
+              "  pm.expect(pm.response.json().success).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "quizId",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "optionId",
+      "value": ""
+    },
+    {
+      "key": "attemptId",
+      "value": ""
+    }
+  ]
+}

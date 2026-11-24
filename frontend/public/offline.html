@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#5b5bd6" />
+    <title>Quizora sedang offline</title>
+    <style>
+      :root {
+        color: #18243a;
+        background: #fafbfe;
+        font-family: system-ui, sans-serif;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+      }
+
+      main {
+        width: min(440px, calc(100% - 40px));
+        padding: 32px;
+        border: 1px solid #e8ebf0;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 16px 48px rgb(34 45 68 / 8%);
+        text-align: center;
+      }
+
+      .mark {
+        display: grid;
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 18px;
+        place-items: center;
+        border-radius: 16px;
+        background: #e9eaff;
+        color: #5958d6;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 12px 0 22px;
+        color: #687184;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      a {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        padding: 0 16px;
+        border-radius: 11px;
+        background: #5b5bd6;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="mark" aria-hidden="true">Q</span>
+      <h1>Kamu sedang offline</h1>
+      <p>Halaman dan data kuis membutuhkan koneksi internet. Jawaban tidak dapat dikirim saat offline. Sambungkan kembali, lalu coba lagi.</p>
+      <a href="/">Coba muat ulang</a>
+    </main>
+  </body>
+</html>
