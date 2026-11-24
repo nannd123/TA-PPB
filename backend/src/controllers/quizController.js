@@ -27,12 +27,12 @@ export async function getDailyQuiz(_request, response) {
   const schedule = await ensureDailyQuizScheduled(today)
 
   if (!schedule) {
-    throw new AppError(404, 'No published daily quiz is available today.')
+    throw new AppError(404, 'Belum ada paket kuis terbit dengan tepat lima pertanyaan valid untuk Daily Quiz hari ini.')
   }
 
   const quiz = await findDailyQuiz(today)
   if (!quiz || quiz.question_count !== 5) {
-    throw new AppError(404, 'No published daily quiz is available today.')
+    throw new AppError(404, 'Belum ada paket kuis terbit dengan tepat lima pertanyaan valid untuk Daily Quiz hari ini.')
   }
 
   return sendSuccess(response, 'Daily quiz retrieved.', quiz)

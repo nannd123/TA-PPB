@@ -42,10 +42,10 @@ Apply the SQL migrations and development seed in Supabase before using the
 database-backed endpoints. See [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
 and [`docs/DATABASE_SCHEMA.md`](./docs/DATABASE_SCHEMA.md).
 
-The backend schedules a validated Daily Quiz at midnight Asia/Jakarta using
-`node-cron`. Keep a backend process running in deployment; startup recovery
-and the Daily Quiz endpoint also create a missing schedule, and the database
-prevents duplicate assignments across instances.
+Daily Quiz is scheduled on demand when `GET /api/quizzes/daily` is requested.
+The database function validates the five-question package, serializes
+concurrent requests, and persists one assignment per Asia/Jakarta date, so no
+background worker or always-on backend process is required.
 
 ### Frontend
 

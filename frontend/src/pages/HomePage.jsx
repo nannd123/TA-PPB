@@ -19,7 +19,7 @@ function DailyQuizSection() {
       {!loading && error?.status === 404 && (
         <EmptyState
           title="Kuis harian belum tersedia"
-          description="Kuis harian baru akan muncul di sini saat tersedia."
+          description="Belum ada paket terbit dengan tepat lima pertanyaan valid untuk hari ini. Coba lagi nanti."
         />
       )}
       {!loading && error && error.status !== 404 && <ErrorState error={error} onRetry={retry} />}

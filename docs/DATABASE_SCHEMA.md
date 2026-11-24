@@ -92,8 +92,8 @@ copies eligible legacy daily records into the new schedule table.
 3. Configure the backend with the Supabase URL and server-side service role
    key in `backend/.env`; never commit that file.
 
-The backend runs `node-cron` at `0 0 * * *` with the `Asia/Jakarta` timezone.
-Startup recovery and `GET /api/quizzes/daily` also check that today's schedule
-exists. Keep at least one backend process running for the midnight task;
-multiple instances are safe because the database function is atomic and
-idempotent. Supabase Cron is not required.
+`GET /api/quizzes/daily` lazily ensures the current Asia/Jakarta date is
+scheduled before reading the assigned quiz. The request invokes the atomic,
+idempotent database function directly, so no persistent process, background
+worker, or platform cron is required. This also works when API instances are
+stateless or scale to zero.
