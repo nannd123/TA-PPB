@@ -133,7 +133,8 @@
               "pm.test('Daily quiz exists or returns the documented empty state', function () {",
               "  pm.expect([200, 404]).to.include(pm.response.code);",
               "  if (pm.response.code === 200) {",
-              "    pm.expect(pm.response.json().data.is_daily).to.eql(true);",
+              "    pm.expect(pm.response.json().data.scheduled_date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+              "    pm.expect(pm.response.json().data.question_count).to.eql(5);",
               "  }",
               "});"
             ]

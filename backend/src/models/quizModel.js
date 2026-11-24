@@ -1,7 +1,7 @@
 import { getSupabaseClient } from '../config/supabaseClient.js'
 import { unwrapDatabaseResult } from '../utils/database.js'
 
-const QUIZ_COLUMNS = 'id,category_id,title,description,difficulty,duration_seconds,is_daily,daily_date,created_at,category:categories(id,name,slug,icon_name),questions(count)'
+const QUIZ_COLUMNS = 'id,category_id,title,description,difficulty,duration_seconds,created_at,category:categories(id,name,slug,icon_name),questions(count)'
 const DAILY_QUIZ_COLUMNS = 'id,category_id,title,description,difficulty,duration_seconds,created_at,category:categories(id,name,slug,icon_name),questions(count)'
 
 function includeQuestionCount(quiz) {

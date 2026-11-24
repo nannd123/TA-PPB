@@ -5,14 +5,20 @@ VALUES
   (
     'Sains dan Alam',
     'sains-dan-alam',
-    'Kuis tentang sains dasar dan fenomena alam.',
+    'Kuis analitis tentang sains, fisika, biologi, dan kimia.',
     'flask-conical'
   ),
   (
     'Geografi',
     'geografi',
-    'Kenali bumi, wilayah, dan tempat-tempat di dunia.',
+    'Kuis analitis tentang dinamika bumi, iklim, peta, dan kependudukan.',
     'globe-2'
+  ),
+  (
+    'Matematika',
+    'matematika',
+    'Kuis penalaran kuantitatif, aljabar, statistika, peluang, dan geometri.',
+    'calculator'
   )
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
@@ -26,8 +32,6 @@ INSERT INTO public.quizzes (
   description,
   difficulty,
   duration_seconds,
-  is_daily,
-  daily_date,
   is_published
 )
 SELECT
@@ -37,8 +41,6 @@ SELECT
   quiz.description,
   quiz.difficulty,
   quiz.duration_seconds,
-  false,
-  null,
   true
 FROM (
   VALUES
@@ -68,8 +70,6 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description,
   difficulty = EXCLUDED.difficulty,
   duration_seconds = EXCLUDED.duration_seconds,
-  is_daily = EXCLUDED.is_daily,
-  daily_date = EXCLUDED.daily_date,
   is_published = EXCLUDED.is_published;
 
 INSERT INTO public.questions (id, quiz_id, question_text, explanation, points, order_number)
@@ -161,21 +161,10 @@ ON CONFLICT (id) DO UPDATE SET
   option_text = EXCLUDED.option_text,
   is_correct = EXCLUDED.is_correct;
 
--- Upsert kategori yang diperlukan. Kategori Matematika ditambahkan di sini.
-INSERT INTO public.categories (id, name, slug, description, icon_name)
-VALUES
-  (gen_random_uuid(), 'Sains dan Alam', 'sains-dan-alam', 'Kuis analitis tentang sains, fisika, biologi, dan kimia.', 'flask-conical'),
-  (gen_random_uuid(), 'Geografi', 'geografi', 'Kuis analitis tentang dinamika bumi, iklim, peta, dan kependudukan.', 'globe-2'),
-  (gen_random_uuid(), 'Matematika', 'matematika', 'Kuis penalaran kuantitatif, aljabar, statistika, peluang, dan geometri.', 'calculator')
-ON CONFLICT (slug) DO UPDATE SET
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  icon_name = EXCLUDED.icon_name;
-
 -- ID kuis 110-116 menghindari konflik dengan paket lama 103-107 pada seed Quizora.
--- Upsert paket kuis. is_daily tetap false karena penjadwalan dikelola oleh daily_quiz_schedule.
-INSERT INTO public.quizzes (id, category_id, title, description, difficulty, duration_seconds, is_daily, daily_date, is_published)
-SELECT v.id::uuid, c.id, v.title, v.description, v.difficulty, v.duration_seconds, false, NULL, true
+-- Upsert paket kuis; penjadwalan dikelola oleh daily_quiz_schedule.
+INSERT INTO public.quizzes (id, category_id, title, description, difficulty, duration_seconds, is_published)
+SELECT v.id::uuid, c.id, v.title, v.description, v.difficulty, v.duration_seconds, true
 FROM (VALUES
 ('00000000-0000-4000-8000-000000000110', 'matematika', 'Aljabar, Fungsi, dan Barisan', 'Uji kemampuan menyelesaikan persamaan, menganalisis fungsi kuadrat, dan menentukan pola barisan.', 'medium', 300),
 ('00000000-0000-4000-8000-000000000111', 'matematika', 'Peluang dan Statistika Terapan', 'Analisis peluang kejadian, ukuran pemusatan data, dan variasi statistik melalui perhitungan.', 'medium', 300),
@@ -193,8 +182,6 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description,
   difficulty = EXCLUDED.difficulty,
   duration_seconds = EXCLUDED.duration_seconds,
-  is_daily = false,
-  daily_date = NULL,
   is_published = true;
 
 -- Insert/update pertanyaan. ID dimulai dari 207 agar tidak bertabrakan dengan seed awal (201-206).
@@ -391,20 +378,61 @@ ON CONFLICT (id) DO UPDATE SET
   option_text = EXCLUDED.option_text,
   is_correct = EXCLUDED.is_correct;
 
--- Verifikasi ringkas jumlah paket dan pertanyaan. Constraint trigger memvalidasi 4 opsi dan 1 jawaban benar saat COMMIT.
+-- Verify the complete seed; deferred constraints also validate every option set at COMMIT.
 DO $$
 DECLARE
+  v_quiz_ids uuid[] := ARRAY[
+    '00000000-0000-4000-8000-000000000101'::uuid,
+    '00000000-0000-4000-8000-000000000102'::uuid,
+    '00000000-0000-4000-8000-000000000110'::uuid,
+    '00000000-0000-4000-8000-000000000111'::uuid,
+    '00000000-0000-4000-8000-000000000112'::uuid,
+    '00000000-0000-4000-8000-000000000113'::uuid,
+    '00000000-0000-4000-8000-000000000114'::uuid,
+    '00000000-0000-4000-8000-000000000115'::uuid,
+    '00000000-0000-4000-8000-000000000116'::uuid
+  ];
   v_quiz_count integer;
   v_question_count integer;
+  v_option_count integer;
+  v_invalid_question_count integer;
 BEGIN
   SELECT count(*) INTO v_quiz_count
   FROM public.quizzes
-  WHERE id IN ('00000000-0000-4000-8000-000000000110', '00000000-0000-4000-8000-000000000111', '00000000-0000-4000-8000-000000000112', '00000000-0000-4000-8000-000000000113', '00000000-0000-4000-8000-000000000114', '00000000-0000-4000-8000-000000000115', '00000000-0000-4000-8000-000000000116');
+  WHERE id = ANY (v_quiz_ids);
+
   SELECT count(*) INTO v_question_count
   FROM public.questions
-  WHERE quiz_id IN ('00000000-0000-4000-8000-000000000110', '00000000-0000-4000-8000-000000000111', '00000000-0000-4000-8000-000000000112', '00000000-0000-4000-8000-000000000113', '00000000-0000-4000-8000-000000000114', '00000000-0000-4000-8000-000000000115', '00000000-0000-4000-8000-000000000116');
-  IF v_quiz_count <> 7 OR v_question_count <> 35 THEN
-    RAISE EXCEPTION 'Question bank v2 incomplete: % packages, % questions', v_quiz_count, v_question_count;
+  WHERE quiz_id = ANY (v_quiz_ids);
+
+  SELECT count(*) INTO v_option_count
+  FROM public.answer_options AS answer_option
+  JOIN public.questions AS question
+    ON question.id = answer_option.question_id
+  WHERE question.quiz_id = ANY (v_quiz_ids);
+
+  SELECT count(*) INTO v_invalid_question_count
+  FROM (
+    SELECT question.id
+    FROM public.questions AS question
+    LEFT JOIN public.answer_options AS answer_option
+      ON answer_option.question_id = question.id
+    WHERE question.quiz_id = ANY (v_quiz_ids)
+    GROUP BY question.id
+    HAVING count(answer_option.id) <> 4
+      OR count(*) FILTER (WHERE answer_option.is_correct) <> 1
+  ) AS invalid_questions;
+
+  IF v_quiz_count <> 9
+    OR v_question_count <> 41
+    OR v_option_count <> 164
+    OR v_invalid_question_count <> 0 THEN
+    RAISE EXCEPTION
+      'Quizora seed incomplete: % quizzes, % questions, % options, % invalid questions',
+      v_quiz_count,
+      v_question_count,
+      v_option_count,
+      v_invalid_question_count;
   END IF;
 END;
 $$;

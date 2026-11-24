@@ -4,21 +4,23 @@ The Supabase PostgreSQL schema is created by the initial migration
 [`20261117000000_initial_schema.sql`](../supabase/migrations/20261117000000_initial_schema.sql)
 and the additive Daily Quiz migration
 [`20261122000000_daily_quiz_scheduling.sql`](../supabase/migrations/20261122000000_daily_quiz_scheduling.sql).
+The cleanup migration
+[`20261124000000_daily_quiz_schedule_only.sql`](../supabase/migrations/20261124000000_daily_quiz_schedule_only.sql)
+removes the legacy quiz-level daily fields after validating that every legacy
+assignment exists in `daily_quiz_schedule`.
 The user-auth migration
 [`20261123000000_user_auth_and_profile_avatars.sql`](../supabase/migrations/20261123000000_user_auth_and_profile_avatars.sql)
 creates the profile avatar storage bucket and policies.
-Original Indonesian sample data is in [`seed.sql`](../supabase/seed.sql). The seed
-includes the supplied Question Bank v2, also retained as
-[`quizora_question_bank_v2.sql`](../supabase/quizora_question_bank_v2.sql), and
-is for populating a development database; the application must still read and
-write through the Quizora Express API.
+[`seed.sql`](../supabase/seed.sql) is the sole official, idempotent seed source
+for development databases; the application must still read and write through
+the Quizora Express API.
 
 ## Tables and relationships
 
 | Table | Purpose | Important relationships |
 |---|---|---|
 | `categories` | Published quiz groupings | One category has many quizzes |
-| `quizzes` | Quiz metadata and publication/daily status | Belongs to one category |
+| `quizzes` | Quiz metadata and publication status | Belongs to one category |
 | `questions` | Ordered, weighted quiz questions and explanations | Belongs to one quiz |
 | `answer_options` | Four labelled choices and server-side answer key | Belongs to one question |
 | `daily_quiz_schedule` | Immutable daily quiz assignment | One quiz per scheduled date |
@@ -29,9 +31,8 @@ write through the Quizora Express API.
 
 - Category slugs are unique and lowercase URL slugs.
 - Quiz difficulty is `easy`, `medium`, or `hard`; duration must be positive.
-- The legacy `quizzes.is_daily` / `daily_date` columns remain for compatibility.
-  `daily_quiz_schedule` is the current source of truth and allows one quiz per
-  scheduled date.
+- `daily_quiz_schedule` is the sole source of truth for Daily Quiz assignments
+  and allows one quiz per scheduled date.
 - Question order is unique within its quiz; points and order must be positive.
 - Each question must have exactly four options labelled A–D and exactly one
   correct option. Deferred constraint triggers check the complete set at
@@ -83,18 +84,13 @@ copies eligible legacy daily records into the new schedule table.
 1. Review and run all SQL migrations in timestamp order in the Supabase SQL
    Editor, or apply them with Supabase CLI migrations after initializing the
    project.
-2. Run `supabase/seed.sql` in a development project to insert three categories
-   and seven published five-question Question Bank v2 packages. The v2 quizzes
-   are medium difficulty with a five-minute timer. The two original demo
-   packages remain in the seed with three questions each and are therefore
-   excluded from Daily Quiz scheduling. The seed can be rerun without
-   duplicating its records.
+2. Run `supabase/seed.sql` in a development project to upsert three categories,
+   nine quiz packages, 41 questions, and 164 answer options. Seven packages
+   contain five questions and are eligible for Daily Quiz; two demo packages
+   contain three questions each. The seed checks these counts and is safe to
+   run repeatedly without duplicating its records.
 3. Configure the backend with the Supabase URL and server-side service role
    key in `backend/.env`; never commit that file.
-
-No Supabase project was connected while preparing these files. Apply the
-migration to a development database and verify the RPC/constraints before
-using it with production data.
 
 The backend runs `node-cron` at `0 0 * * *` with the `Asia/Jakarta` timezone.
 Startup recovery and `GET /api/quizzes/daily` also check that today's schedule
