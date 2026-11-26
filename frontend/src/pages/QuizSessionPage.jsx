@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Clock3 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Clock3, Flag } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState.jsx'
 import { getQuiz, getQuizQuestions } from '../services/quizService.js'
@@ -24,15 +24,36 @@ export default function QuizSessionPage() {
   const navigate = useNavigate()
   const [revision, setRevision] = useState(0)
   const [sessionState, setSessionState] = useState({ key: null, revision: -1, data: null, error: null })
-  const [answers, setAnswers] = useState({})
-  const [questionIndex, setQuestionIndex] = useState(0)
-  const [now, setNow] = useState(0)
+  const [progress, setProgress] = useState(() => ({
+    quizId,
+    answers: {},
+    questionIndex: 0,
+    doubtfulQuestions: {},
+  }))
+  const [now, setNow] = useState(() => Date.now())
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
-  const [expired, setExpired] = useState(false)
+  const [expiredQuizId, setExpiredQuizId] = useState(null)
   const submittedRef = useRef(false)
   const submittingRef = useRef(false)
   const resourceKey = `quiz-session:${quizId}`
+  const currentProgress = progress.quizId === quizId
+    ? progress
+    : { quizId, answers: {}, questionIndex: 0, doubtfulQuestions: {} }
+  const { answers, questionIndex, doubtfulQuestions } = currentProgress
+  const expired = expiredQuizId === quizId
+  const updateProgress = (update) => {
+    setProgress((current) => update(
+      current.quizId === quizId
+        ? current
+        : { quizId, answers: {}, questionIndex: 0, doubtfulQuestions: {} },
+    ))
+  }
+
+  useEffect(() => {
+    submittedRef.current = false
+    submittingRef.current = false
+  }, [quizId])
 
   useEffect(() => {
     let active = true
@@ -63,6 +84,8 @@ export default function QuizSessionPage() {
   const startedAt = session?.attempt.started_at ? Date.parse(session.attempt.started_at) : now
   const elapsedSeconds = Math.max(0, Math.floor((now - startedAt) / 1000))
   const remainingSeconds = Math.max(0, durationSeconds - elapsedSeconds)
+  const answeredCount = questions.filter((item) => Boolean(answers[item.id])).length
+  const isCurrentQuestionDoubtful = question ? Boolean(doubtfulQuestions[question.id]) : false
 
   useEffect(() => {
     if (!session) {
@@ -95,7 +118,7 @@ export default function QuizSessionPage() {
     } catch (error) {
       const apiError = getApiError(error)
       if (apiError.status === 409 && apiError.data?.expired) {
-        setExpired(true)
+        setExpiredQuizId(quizId)
       } else {
         setSubmitError(apiError.message)
       }
@@ -103,7 +126,7 @@ export default function QuizSessionPage() {
       submittingRef.current = false
       setSubmitting(false)
     }
-  }, [answers, navigate, session])
+  }, [answers, navigate, quizId, session])
 
   useEffect(() => {
     if (session && remainingSeconds === 0 && !expired && !submittedRef.current) {
@@ -144,10 +167,16 @@ export default function QuizSessionPage() {
           <p className="eyebrow">SEDANG MENGERJAKAN</p>
           <h1>{session.quiz.title}</h1>
         </div>
-        <span className={`timer ${remainingSeconds <= 30 ? 'low-time' : ''}`} role="timer" aria-live="polite">
+        <span className={`timer ${remainingSeconds <= 60 ? 'low-time' : ''}`} role="timer" aria-live="polite">
           <Clock3 aria-hidden="true" size={16} /> {formatTime(remainingSeconds)}
         </span>
       </div>
+      {remainingSeconds > 0 && remainingSeconds <= 60 && (
+        <div className="time-warning" role="alert">
+          <AlertTriangle aria-hidden="true" size={17} />
+          <span>Waktu tersisa 1 menit atau kurang. Segera periksa jawabanmu.</span>
+        </div>
+      )}
       {question && (
         <section className="question-card" aria-label={`Pertanyaan ${safeQuestionIndex + 1}`}>
           <div className="question-top">
@@ -163,6 +192,32 @@ export default function QuizSessionPage() {
           >
             <span style={{ width: `${((safeQuestionIndex + 1) / questions.length) * 100}%` }} />
           </div>
+          <nav className="question-navigation" aria-label="Navigasi nomor soal">
+            <div className="question-number-list">
+              {questions.map((item, index) => {
+                const isAnswered = Boolean(answers[item.id])
+                const isDoubtful = Boolean(doubtfulQuestions[item.id])
+                const status = isDoubtful ? 'doubtful' : isAnswered ? 'answered' : 'unanswered'
+                return (
+                  <button
+                    key={item.id}
+                    className={`question-number ${status} ${index === safeQuestionIndex ? 'current' : ''}`}
+                    type="button"
+                    aria-label={`Soal ${index + 1}, ${isDoubtful ? 'ragu-ragu' : isAnswered ? 'sudah dijawab' : 'belum dijawab'}`}
+                    aria-current={index === safeQuestionIndex ? 'step' : undefined}
+                    onClick={() => updateProgress((current) => ({ ...current, questionIndex: index }))}
+                  >
+                    {index + 1}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="question-legend" aria-label="Keterangan status soal">
+              <span><i className="legend-dot answered" /> Dijawab</span>
+              <span><i className="legend-dot unanswered" /> Belum dijawab</span>
+              <span><i className="legend-dot doubtful" /> Ragu-ragu</span>
+            </div>
+          </nav>
           <h2 className="question-text">{question.question_text}</h2>
           <div className="answer-list" role="radiogroup" aria-label="Pilihan jawaban">
             {question.answer_options.map((option) => (
@@ -172,28 +227,52 @@ export default function QuizSessionPage() {
                 type="button"
                 role="radio"
                 aria-checked={answers[question.id] === option.id}
-                onClick={() => setAnswers((current) => ({ ...current, [question.id]: option.id }))}
+                onClick={() => updateProgress((current) => ({
+                  ...current,
+                  answers: { ...current.answers, [question.id]: option.id },
+                }))}
               >
                 <span className="option-label">{option.option_label}</span>
                 <span>{option.option_text}</span>
               </button>
             ))}
           </div>
+          <button
+            className={`doubtful-toggle ${isCurrentQuestionDoubtful ? 'active' : ''}`}
+            type="button"
+            aria-pressed={isCurrentQuestionDoubtful}
+            onClick={() => updateProgress((current) => ({
+              ...current,
+              doubtfulQuestions: {
+                ...current.doubtfulQuestions,
+                [question.id]: !current.doubtfulQuestions[question.id],
+              },
+            }))}
+          >
+            <Flag aria-hidden="true" size={15} />
+            {isCurrentQuestionDoubtful ? 'Hapus tanda ragu-ragu' : 'Tandai ragu-ragu'}
+          </button>
           <div className="session-actions">
             <button
               className="secondary-button"
               type="button"
               disabled={safeQuestionIndex === 0 || submitting}
-              onClick={() => setQuestionIndex((index) => Math.max(index - 1, 0))}
+              onClick={() => updateProgress((current) => ({
+                ...current,
+                questionIndex: Math.max(current.questionIndex - 1, 0),
+              }))}
             >
               <ArrowLeft aria-hidden="true" size={15} /> Sebelumnya
             </button>
-            <span>{Object.keys(answers).length} dari {questions.length} dijawab</span>
+            <span>{answeredCount} dari {questions.length} dijawab</span>
             {safeQuestionIndex < questions.length - 1 ? (
               <button
                 className="primary-button"
                 type="button"
-                onClick={() => setQuestionIndex((index) => Math.min(index + 1, questions.length - 1))}
+                onClick={() => updateProgress((current) => ({
+                  ...current,
+                  questionIndex: Math.min(current.questionIndex + 1, questions.length - 1),
+                }))}
               >
                 Berikutnya <ArrowRight aria-hidden="true" size={15} />
               </button>

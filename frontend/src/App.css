@@ -521,6 +521,100 @@
   transition: width 180ms ease;
 }
 
+.question-navigation {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #e8ebf0;
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.question-number-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.question-number {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #dfe3eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #70798a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.question-number.answered,
+.legend-dot.answered {
+  border-color: #b7e3ca;
+  background: #eff9f3;
+  color: #26734f;
+}
+
+.question-number.doubtful,
+.legend-dot.doubtful {
+  border-color: #f0d39a;
+  background: #fff7e7;
+  color: #a56a13;
+}
+
+.question-number.current {
+  outline: 2px solid #5b5bd6;
+  outline-offset: 2px;
+}
+
+.question-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: #687184;
+  font-size: 11px;
+}
+
+.question-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #dfe3eb;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.doubtful-toggle {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 0 11px;
+  border: 1px solid #f0d39a;
+  border-radius: 9px;
+  background: #fffaf0;
+  color: #94600f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.doubtful-toggle.active {
+  background: #fff1d2;
+}
+
 .question-text {
   margin: 24px 0 18px;
   color: #222e45;
@@ -604,6 +698,20 @@
 .timer.low-time {
   background: #fff2ef;
   color: #bf4b3b;
+}
+
+.time-warning {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f1d0ca;
+  border-radius: 11px;
+  background: #fff7f5;
+  color: #a94235;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .session-actions {
@@ -691,6 +799,28 @@
 .review-option.incorrect {
   background: #fff2ef;
   color: #b94a3b;
+}
+
+.review-result-status.unanswered {
+  color: #a56a13;
+  font-weight: 700;
+}
+
+.review-answer-tag {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #ffe4df;
+  color: #a94235;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.review-answer-tag.correct {
+  background: #dff2e7;
+  color: #26734f;
 }
 
 .history-list {

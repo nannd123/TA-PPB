@@ -50,7 +50,7 @@ FROM (
       'Dasar-Dasar Sains',
       'Uji pemahamanmu tentang konsep sains yang dekat dengan kehidupan sehari-hari.',
       'easy',
-      300
+      180
     ),
     (
       '00000000-0000-4000-8000-000000000102',
@@ -99,6 +99,22 @@ VALUES
     3
   ),
   (
+    '00000000-0000-4000-8000-000000000242',
+    '00000000-0000-4000-8000-000000000101',
+    'Gas apa yang paling banyak terdapat di atmosfer Bumi?',
+    'Nitrogen membentuk sekitar 78% atmosfer Bumi, sehingga menjadi gas yang paling melimpah.',
+    10,
+    4
+  ),
+  (
+    '00000000-0000-4000-8000-000000000243',
+    '00000000-0000-4000-8000-000000000101',
+    'Organ tubuh manusia yang memompa darah ke seluruh tubuh adalah?',
+    'Jantung memompa darah melalui sistem peredaran darah ke seluruh tubuh.',
+    10,
+    5
+  ),
+  (
     '00000000-0000-4000-8000-000000000204',
     '00000000-0000-4000-8000-000000000102',
     'Samudra terluas di bumi adalah samudra apa?',
@@ -143,6 +159,14 @@ VALUES
   ('00000000-0000-4000-8000-000000000310', '00000000-0000-4000-8000-000000000203', 'B', '50°C', false),
   ('00000000-0000-4000-8000-000000000311', '00000000-0000-4000-8000-000000000203', 'C', '100°C', true),
   ('00000000-0000-4000-8000-000000000312', '00000000-0000-4000-8000-000000000203', 'D', '150°C', false),
+  ('00000000-0000-4000-8000-000000000465', '00000000-0000-4000-8000-000000000242', 'A', 'Oksigen', false),
+  ('00000000-0000-4000-8000-000000000466', '00000000-0000-4000-8000-000000000242', 'B', 'Nitrogen', true),
+  ('00000000-0000-4000-8000-000000000467', '00000000-0000-4000-8000-000000000242', 'C', 'Karbon dioksida', false),
+  ('00000000-0000-4000-8000-000000000468', '00000000-0000-4000-8000-000000000242', 'D', 'Hidrogen', false),
+  ('00000000-0000-4000-8000-000000000469', '00000000-0000-4000-8000-000000000243', 'A', 'Paru-paru', false),
+  ('00000000-0000-4000-8000-000000000470', '00000000-0000-4000-8000-000000000243', 'B', 'Hati', false),
+  ('00000000-0000-4000-8000-000000000471', '00000000-0000-4000-8000-000000000243', 'C', 'Jantung', true),
+  ('00000000-0000-4000-8000-000000000472', '00000000-0000-4000-8000-000000000243', 'D', 'Ginjal', false),
   ('00000000-0000-4000-8000-000000000313', '00000000-0000-4000-8000-000000000204', 'A', 'Samudra Atlantik', false),
   ('00000000-0000-4000-8000-000000000314', '00000000-0000-4000-8000-000000000204', 'B', 'Samudra Hindia', false),
   ('00000000-0000-4000-8000-000000000315', '00000000-0000-4000-8000-000000000204', 'C', 'Samudra Arktik', false),
@@ -424,8 +448,8 @@ BEGIN
   ) AS invalid_questions;
 
   IF v_quiz_count <> 9
-    OR v_question_count <> 41
-    OR v_option_count <> 164
+    OR v_question_count <> 43
+    OR v_option_count <> 172
     OR v_invalid_question_count <> 0 THEN
     RAISE EXCEPTION
       'Quizora seed incomplete: % quizzes, % questions, % options, % invalid questions',

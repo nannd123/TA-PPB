@@ -1,4 +1,4 @@
-import { ArrowLeft, CircleCheck, CircleX } from 'lucide-react'
+import { ArrowLeft, CircleCheck, CircleX, RotateCcw } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState, ErrorState, LoadingState } from '../components/AsyncState.jsx'
 import PageHeading from '../components/PageHeading.jsx'
@@ -31,7 +31,13 @@ export default function QuizResultPage() {
 
   return (
     <div className="page-container">
-      <PageHeading eyebrow="SELESAI" title="Hasil kuis" description={attempt.quiz?.title || 'Kuis'} />
+      <PageHeading eyebrow="SELESAI" title="Hasil kuis" description={attempt.quiz?.title || 'Kuis'}>
+        {attempt.quiz?.id && (
+          <Link className="primary-button" to={`/quiz/${attempt.quiz.id}/session`}>
+            <RotateCcw aria-hidden="true" size={15} /> Coba lagi
+          </Link>
+        )}
+      </PageHeading>
       <section className="result-hero" aria-label="Ringkasan nilai">
         <div className="score-circle">{score}%</div>
         <div>
@@ -64,7 +70,9 @@ export default function QuizResultPage() {
             <article className="question-card" key={answer.question_id}>
               <div className="question-top">
                 <span>Pertanyaan {index + 1}</span>
-                <span>{answer.is_correct ? 'Benar' : 'Belum tepat'}</span>
+                <span className={`review-result-status ${selectedOptionId ? '' : 'unanswered'}`}>
+                  {!selectedOptionId ? 'Tidak dijawab' : answer.is_correct ? 'Benar' : 'Belum tepat'}
+                </span>
               </div>
               <h3 className="question-text">{question.question_text}</h3>
               <div>
@@ -79,7 +87,12 @@ export default function QuizResultPage() {
                         : isSelected
                           ? <CircleX aria-hidden="true" size={16} />
                           : <span className="option-label">{option.option_label}</span>}
-                      <span>{option.option_text}{isSelected && !isCorrect ? ' · Jawabanmu' : ''}</span>
+                      <span>{option.option_text}</span>
+                      {isSelected && (
+                        <span className={`review-answer-tag ${isCorrect ? 'correct' : ''}`}>
+                          Jawabanmu
+                        </span>
+                      )}
                     </div>
                   )
                 })}
